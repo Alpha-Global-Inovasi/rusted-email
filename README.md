@@ -1,12 +1,22 @@
-# cf-email
+# rusted-email
 
-Email library for Rust services, with SMTP and mock providers and Handlebars templates.
+Email library for Rust services, with SMTP and mock providers and Handlebars templates. Part of the Rusted ecosystem, built by PT Alpha Global Inovasi.
+
+This crate was previously named `cf-email` and distributed from Git only.
 
 ## Installation
 
 ```toml
 [dependencies]
-cf-email = { git = "https://github.com/Crypto-Foundation-Dev/cf-email.git", tag = "v0.1.1" }
+rusted-email = "0.2"
+```
+
+### TLS backend
+
+SMTP connections use rustls with aws-lc-rs by default, and certificates are verified against the operating system's trust store. To use the platform TLS library (OpenSSL on Linux) instead:
+
+```toml
+rusted-email = { version = "0.2", default-features = false, features = ["native-tls"] }
 ```
 
 ## Environment Variables
@@ -25,7 +35,7 @@ cf-email = { git = "https://github.com/Crypto-Foundation-Dev/cf-email.git", tag 
 ## Usage
 
 ```rust,ignore
-use cf_email::{EmailClient, EmailConfig, EmailRequest};
+use rusted_email::{EmailClient, EmailConfig, EmailRequest};
 use serde_json::json;
 
 let client = EmailClient::new(EmailConfig::from_env()?).await?;
@@ -40,6 +50,23 @@ let request = EmailRequest::builder()
 client.send(request).await?;
 ```
 
+## Development
+
+```bash
+cargo test
+cargo clippy --all-targets
+cargo deny check                        # licenses and advisories (needs cargo-deny)
+```
+
+Minimum supported Rust version: 1.89. Raising it is a minor-version change.
+
 ## License
 
-MIT
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this work, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

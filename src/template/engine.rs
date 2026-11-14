@@ -6,6 +6,12 @@ pub struct TemplateEngine {
     registry: Handlebars<'static>,
 }
 
+impl Default for TemplateEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TemplateEngine {
     pub fn new() -> Self {
         Self {
