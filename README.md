@@ -8,7 +8,7 @@ This crate was previously named `cf-email` and distributed from Git only.
 
 ```toml
 [dependencies]
-rusted-email = "0.2"
+rusted-email = "0.3"
 ```
 
 ### TLS backend
@@ -48,6 +48,22 @@ let request = EmailRequest::builder()
     .build()?;
 
 client.send(request).await?;
+```
+
+### Plain-text part
+
+HTML email is sent as `multipart/alternative` with a `text/plain` part for clients that do
+not show HTML:
+
+- `.html(html)`: the text is derived from the HTML with `rusted_email::text::html_to_text`.
+  Paragraphs and list items become lines, and a link is written as `text (address)`, so
+  links such as password resets still work.
+- `.html_with_text(html, text)`: your own text.
+- `.template(name, data)`: a template registered as `<name>.txt` is rendered with the same
+  data as the text part; without one, the text is derived from the rendered HTML.
+
+```rust,ignore
+client.register_template("welcome.txt", "Hi {{name}}").await?;
 ```
 
 ## Development

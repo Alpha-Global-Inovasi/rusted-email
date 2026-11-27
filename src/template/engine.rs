@@ -29,6 +29,10 @@ impl TemplateEngine {
             .map_err(|e| EmailError::TemplateError(e.to_string()))
     }
 
+    pub fn has_template(&self, name: &str) -> bool {
+        self.registry.has_template(name)
+    }
+
     pub fn render(&self, name: &str, data: &Value) -> Result<String, EmailError> {
         self.registry
             .render(name, data)

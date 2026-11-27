@@ -1,6 +1,6 @@
 [package]
 name = "rusted-email"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.89"
 description = "Email library for Rust services, with SMTP and mock providers and Handlebars templates"

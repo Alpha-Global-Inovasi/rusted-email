@@ -4,6 +4,7 @@ pub mod dto;
 pub mod error;
 pub mod provider;
 pub mod template;
+pub mod text;
 
 pub use client::EmailClient;
 pub use config::EmailConfig;

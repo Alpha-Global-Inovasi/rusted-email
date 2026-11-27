@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0, a minor version
 may contain breaking changes.
 
+## [0.3.0] - 2026-11-27
+
+### Changed
+
+- The `text/plain` part of an HTML email is now a readable version of the HTML instead of
+  "Please view this email in a modern client". Links keep their address as
+  `text (address)`.
+- `EmailContent` has a new variant, so an exhaustive `match` on it needs an arm for
+  `Alternative`.
+
+### Added
+
+- `EmailContent::Alternative { html, text }` and `EmailRequestBuilder::html_with_text` to
+  send your own text part.
+- A template registered as `<name>.txt` is rendered as the text part of template `<name>`.
+- `text::html_to_text` and `TemplateEngine::has_template`.
+
 ## [0.2.0] - 2026-11-15
 
 ### Changed

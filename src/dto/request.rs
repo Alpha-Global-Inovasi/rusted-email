@@ -3,7 +3,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum EmailContent {
     Plain(String),
+    /// HTML; the `text/plain` part is derived from it with [`crate::text::html_to_text`].
     Html(String),
+    /// HTML with its own `text/plain` part.
+    Alternative {
+        html: String,
+        text: String,
+    },
+    /// A registered template, rendered by [`crate::EmailClient::send`]. A template
+    /// registered as `<name>.txt` is rendered as the `text/plain` part.
     Template {
         name: String,
         data: serde_json::Value,
@@ -87,6 +95,15 @@ impl EmailRequestBuilder {
 
     pub fn html(mut self, html: impl Into<String>) -> Self {
         self.content = Some(EmailContent::Html(html.into()));
+        self
+    }
+
+    /// HTML with its own `text/plain` part.
+    pub fn html_with_text(mut self, html: impl Into<String>, text: impl Into<String>) -> Self {
+        self.content = Some(EmailContent::Alternative {
+            html: html.into(),
+            text: text.into(),
+        });
         self
     }
 
