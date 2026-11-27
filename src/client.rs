@@ -45,7 +45,15 @@ impl EmailClient {
         if let EmailContent::Template { name, data } = &req.content {
             let engine = self.template_engine.lock().await;
             let html = engine.render(name, data)?;
-            req.content = EmailContent::Html(html);
+            let text_name = format!("{name}.txt");
+            req.content = if engine.has_template(&text_name) {
+                EmailContent::Alternative {
+                    html,
+                    text: engine.render(&text_name, data)?,
+                }
+            } else {
+                EmailContent::Html(html)
+            };
         }
 
         self.provider.send(req).await?;
@@ -88,6 +96,26 @@ mod tests {
             .build()
             .unwrap();
 
+        assert!(client.send(req).await.unwrap().status);
+    }
+
+    #[tokio::test]
+    async fn send_renders_a_text_template_when_registered() {
+        let client = mock_client().await;
+        client
+            .register_template("hi", "<p>Hi {{name}}</p>")
+            .await
+            .unwrap();
+        client
+            .register_template("hi.txt", "Hi {{name}} in text")
+            .await
+            .unwrap();
+        let req = EmailRequest::builder()
+            .to("to@example.com")
+            .subject("Hi")
+            .template("hi", serde_json::json!({ "name": "Ayu" }))
+            .build()
+            .unwrap();
         assert!(client.send(req).await.unwrap().status);
     }
 

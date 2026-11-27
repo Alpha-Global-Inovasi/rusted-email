@@ -2,6 +2,7 @@ use super::EmailProvider;
 use crate::config::SmtpConfig;
 use crate::dto::request::{EmailContent, EmailRequest};
 use crate::error::EmailError;
+use crate::text::html_to_text;
 use async_trait::async_trait;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
@@ -82,12 +83,13 @@ fn build_message(from: &str, req: EmailRequest) -> Result<Message, EmailError> {
         );
     }
 
-    let html_body = |html: String| {
+    let html_body = |html: String, text: Option<String>| {
+        let text = text.unwrap_or_else(|| html_to_text(&html));
         MultiPart::alternative()
             .singlepart(
                 SinglePart::builder()
                     .header(ContentType::TEXT_PLAIN)
-                    .body("Please view this email in a modern client".to_string()),
+                    .body(text),
             )
             .singlepart(
                 SinglePart::builder()
@@ -99,7 +101,10 @@ fn build_message(from: &str, req: EmailRequest) -> Result<Message, EmailError> {
     let result = if req.attachments.is_empty() {
         match req.content {
             EmailContent::Plain(text) => builder.body(text),
-            EmailContent::Html(html) => builder.multipart(html_body(html)),
+            EmailContent::Html(html) => builder.multipart(html_body(html, None)),
+            EmailContent::Alternative { html, text } => {
+                builder.multipart(html_body(html, Some(text)))
+            }
             // Template should be rendered BEFORE calling provider.send
             EmailContent::Template { .. } => {
                 return Err(EmailError::ProviderError(
@@ -110,7 +115,10 @@ fn build_message(from: &str, req: EmailRequest) -> Result<Message, EmailError> {
     } else {
         let mut mixed = match req.content {
             EmailContent::Plain(text) => MultiPart::mixed().singlepart(SinglePart::plain(text)),
-            EmailContent::Html(html) => MultiPart::mixed().multipart(html_body(html)),
+            EmailContent::Html(html) => MultiPart::mixed().multipart(html_body(html, None)),
+            EmailContent::Alternative { html, text } => {
+                MultiPart::mixed().multipart(html_body(html, Some(text)))
+            }
             // Template should be rendered BEFORE calling provider.send
             EmailContent::Template { .. } => {
                 return Err(EmailError::ProviderError(
@@ -208,6 +216,44 @@ mod tests {
         assert!(raw.contains("report.txt"));
         assert!(raw.contains("attachment-content"));
         assert!(raw.contains("<p>Hello</p>"));
+    }
+
+    fn text_part(message: &Message) -> String {
+        let raw = String::from_utf8(message.formatted()).unwrap();
+        let start = raw
+            .find("Content-Type: text/plain")
+            .expect("text/plain part");
+        let body = &raw[start..];
+        let body = &body[body.find("\r\n\r\n").unwrap() + 4..];
+        body[..body.find("\r\n--").unwrap()].to_string()
+    }
+
+    #[test]
+    fn derives_the_text_part_from_html() {
+        let message = build(
+            EmailRequest::builder()
+                .to("to@example.com")
+                .subject("Reset")
+                .html(r#"<p>Hi,</p><p><a href="https://app.example/r">Reset</a></p>"#)
+                .build()
+                .unwrap(),
+        );
+        let text = text_part(&message);
+        assert!(text.contains("Reset (https://app.example/r)"), "{text}");
+        assert!(!text.contains("modern client"));
+    }
+
+    #[test]
+    fn keeps_a_given_text_part() {
+        let message = build(
+            EmailRequest::builder()
+                .to("to@example.com")
+                .subject("Hello")
+                .html_with_text("<p>Hello</p>", "Hello in text")
+                .build()
+                .unwrap(),
+        );
+        assert_eq!(text_part(&message).trim(), "Hello in text");
     }
 
     #[test]

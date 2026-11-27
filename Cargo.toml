@@ -1,6 +1,6 @@
 [package]
 name = "rusted-email"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.89"
 description = "Email library for Rust services, with SMTP and mock providers and Handlebars templates"
@@ -21,7 +21,7 @@ native-tls = ["lettre/tokio1-native-tls"]
 [dependencies]
 async-trait = "0.1.92"
 handlebars = "6.4.4"
-lettre = { version = "0.11.23", default-features = false, features = [
+lettre = { version = "0.11.24", default-features = false, features = [
     "builder",
     "hostname",
     "pool",
