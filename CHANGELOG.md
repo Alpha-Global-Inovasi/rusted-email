@@ -15,6 +15,13 @@ may contain breaking changes.
 - `EmailContent` has a new variant, so an exhaustive `match` on it needs an arm for
   `Alternative`.
 
+### Security
+
+- Requires `lettre` 0.11.24, which fixes RUSTSEC-2026-0560, RUSTSEC-2026-0561, and
+  RUSTSEC-2026-0562 (STARTTLS response injection, SMTP command injection through bare
+  CR or LF, and a panic on an empty `EHLO` reply line) and the other lettre advisories
+  published with them.
+
 ### Added
 
 - `EmailContent::Alternative { html, text }` and `EmailRequestBuilder::html_with_text` to
